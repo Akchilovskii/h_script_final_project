@@ -1,0 +1,25 @@
+head.meta.single.charset=gb2313
+head.title.text= htmlScript Webpage
+body.div[1].span.h1.text=欢迎光临HTML Script网页生成网页.<
+.p[10]
+.p[0].text=这是您第一次光临该网站，本页将介绍htmlScript和其基本语法.<
+.p[1].text=htmlScript是一种简化版的html元素操作语言，其功能支持来源于用c++编写的运行在.<
+.p[2].text=服务器上的HtmlElement类，通过该类可以生成各类html元素并对其进行控制.<
+.p[3].text=通过htmlScript类将解析输入的htmlScript指令来控制HtmlElement来进行操作.<
+.p[4].text=注意：服务器将您的用户名作为和其他用户区分的唯一凭据.<
+.p[5].text=                        操作符.<
+.p[6].text="目前htmlscript仅有 '.' , '<' 等号, '[]' 4个操作符".<
+.p[7].text="'.'操作符，用于定位添加（与[]结合使用时）元素".<
+
+ 
+body.div.form.input[2]
+.input[0].single.type=text.name=username.value=Akchilov.<
+.input[1].single.style=width:300px;height:50px;.type=text.placeholder=input code here.name=codeScript.<
+.input[2].single.type=submit.<
+body.div.form.action="http://127.0.0.1:9190/".method=get.class=formstyle
+css:.formstyle
+.position=fixed.width=350px.height=80px.border=solid.top=60%.left=60%.margin=auto.padding=30px
+.float=left
+
+
+
