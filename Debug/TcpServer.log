@@ -1,3 +1,0 @@
-﻿  script_interpretor.cpp
-C:\Users\Brink\source\repos\TcpServer\TcpServer\script_interpretor.cpp(130,20): warning C4018: “<”: 有符号/无符号不匹配
-  TcpServer.vcxproj -> C:\Users\Brink\source\repos\TcpServer\Debug\TcpServer.exe
