@@ -43,6 +43,11 @@ bool html_doc::html_element_selector::operator&(std::shared_ptr<html_element> co
 
 void html_doc::html_element_selector::reset(std::string name, std::shared_ptr<html_element> htmlele)
 {
+	if (name.front() == '"' && name.back() == '"' && name.length() != 1)
+	{
+		name = name.substr(1);
+		name.pop_back();
+	}
 	element_pos.clear();
 	m_name = name;
 	m_ele = htmlele;
@@ -78,4 +83,9 @@ int html_doc::html_element_selector::index(std::shared_ptr<html_element> element
 			return i;
 		}
 	}
+}
+
+int html_doc::html_element_selector::index_in_html_tree(int ele_index)
+{
+	return element_pos[ele_index];
 }

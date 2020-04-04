@@ -14,6 +14,7 @@ public:
 		void update();
 		int size();
 		int index(std::shared_ptr<html_element> element_ptr);
+		int index_in_html_tree(int ele_index);
 		
 	private:
 		std::string m_name;

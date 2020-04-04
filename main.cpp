@@ -1,19 +1,44 @@
-#include<iostream>
-#include"htmlElement.h"  //html主类
-#include"html_doc.h" //html 辅助类
-#include"string_processor.h" //文字处理工具， 包括主要为字符串分割保护器
-#include"script_interpretor.h"//脚本解释类
+#include"tcpserver.h"
+#include"script_interpretor.h"
 #include<string>
-#include<boost/tokenizer.hpp>
-#include<boost/beast.hpp>
+
+
 using namespace std;
+
+string keyboard_input(const char end_char)
+{
+	char i = 0;
+	string result;
+	cin >> noskipws;
+	while (i != end_char)
+	{
+		cin >> i;
+		if (i == '\n')
+			continue;
+		result += i;
+	}
+	cin >> skipws;
+	result.pop_back();
+	return result;
+}
 
 int main()
 {
+	TcpServer my_server(9190);
+	auto client = my_server.Accept();
+	if (!client)
+	{
+		cout << "invalid socket connect" << endl;
+	}
+	char message[20] = { 0 };
+	SOCKET s = client->GetSocket();
+	int len=recv(s, message, 20, 0);
+	cout << message << endl;
+	//脚本解释器
 	script_interpretor si;
 	try
 	{
-		script_interpretor si; //脚本解释器
+		
 		/*                                  ***********简单的使用方法**************
 		    “.” 是字符分割符号，但放在双引号中无效（不起分割作用），同时该符号能定位前一个元素下的名字为当前元素的html标签，如果不存在该标签，
 			就会自动创建该标签
@@ -26,19 +51,19 @@ int main()
 			“>>”符号滚动至同目录下，下一个同名标签
 			“<”符号返回上一级目录
 		*/
-		si.script("html.body.div[0,1,2].form.action=\"http://192.168.0.1:9190/index.htm\".input.single.placeholder=\"do me a favor.\".type=text.<.input[1].single.type=submit");
-		si.script("body.div[0].form.p[3].<");
-		si.script("p[0].text=i love you");
-		si.script(">>.text= i hate you");
-		si.script(">>.text= i lied");
-		si.script(">>.text=but all those i do,they're for you");
+		string cmdline;
+		while ((cmdline = keyboard_input(';')) != "quit")
+		{
+			si.script(cmdline);
+			cout << si.show_html_code();
+		}
 		//si.script(">>.text = for you");
 		//si.script("for i(0,2) in 2html : i.text = hello world");
-		cout << si.show_html_code();
+		
 	}
 	catch (const char * e) //抛出字符串常量，请勿模仿。。。。
 	{
-		//cout << si.show_html_code();
+		cout << si.show_html_code();
 		cout << e;
 		return -1;
 	}

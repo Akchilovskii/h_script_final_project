@@ -33,7 +33,11 @@ protected:
 class css_element : public h_attrib
 {
 public:
+	
+	std::vector<std::string> css_line();
 	virtual std::string attribs_list()override;
+private:
+	std::map<std::string, std::string>::iterator attr_iter;
 };
 class html_element
 {
@@ -53,7 +57,7 @@ private:
 	
 	bool m_single = false;
 	int m_level;
-	
+	bool is_css_element = false;
 public:
 	explicit html_element(std::string name, int level);
 	~html_element();
@@ -83,10 +87,12 @@ public:
 
 	void set_push(int level);
 	void set_single();
+	void set_to_css();
 	void store_self(std::shared_ptr<html_element> self);
 
 	bool name_equal(std::string name);
 	bool single();
+	bool css_element();
 
 	std::string name();
 };

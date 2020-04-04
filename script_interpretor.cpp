@@ -191,6 +191,11 @@ bool script_interpretor::is_special_word(string key_word, std::weak_ptr<html_ele
 		position.lock()->set_single();
 		return true;
 	}
+	if (key_word == "css")
+	{
+		position.lock()->set_to_css();
+		return true;
+	}
 	return false;
 }
 
@@ -204,6 +209,14 @@ bool script_interpretor::is_special_symbol(string key_symbol, std::weak_ptr<html
 	if (key_symbol == "<")
 	{
 		position = position.lock()->father();
+		return true;
+	}
+	if (key_symbol == "-")
+	{
+		h_selector selector(position.lock()->name(), position.lock()->father().lock());
+		int pos_index = selector.index(position.lock());
+		position = position.lock()->father();
+		(*position.lock()) - pos_index;
 		return true;
 	}
 	return false;
