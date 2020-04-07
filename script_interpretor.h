@@ -14,10 +14,12 @@
 #include"string_processor.h"
 #include<boost/tokenizer.hpp>
 #include<boost/algorithm/string.hpp>
-#include<optional>
+
 #include"html_doc.h"
-using std::optional;
+#include<fstream>
 using namespace boost;
+using std::ifstream;
+using std::ofstream;
 class script_interpretor
 {
 	typedef string_processor::string_protector protector;
@@ -59,6 +61,8 @@ public:
 	std::weak_ptr<html_element> next(std::weak_ptr<html_element> position, string element_name, std::weak_ptr<html_element> this_addr);
 	operation<int> bracket(string cmd);
 	void script_thread(vector<string>::iterator iter, std::weak_ptr<html_element> cur_pos);// being used function
+
+	
 private:
 	std::shared_ptr<html_element> html,head,body,div;
 	std::weak_ptr<html_element> current_pos;

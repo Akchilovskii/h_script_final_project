@@ -113,14 +113,8 @@ vector<string> script_interpretor::spliter(string cmd, protector& s_pro, devider
 	{
 		if (!s_dev)
 			break;
-		while (s_pro & i)
-		{
-			i = s_dev.next();
-			if (!s_dev)
-				break;
-		}
-		if (!s_dev)
-			break;
+		if (s_pro & i)
+			continue;
 		split_pos.push_back(i.first);
 	}
 	split_pos.push_back(cmd.length());
@@ -256,6 +250,7 @@ operation_int script_interpretor::bracket(string cmd)
 
 void script_interpretor::script_thread(vector<string>::iterator iter, std::weak_ptr<html_element> cur_pos)
 {
+	
 	if (iter == cmds_list.end())
 	{
 		current_pos = cur_pos;
@@ -317,4 +312,6 @@ void script_interpretor::script_thread(vector<string>::iterator iter, std::weak_
 	current_pos = selector[0];
 	return script_thread(++iter, current_pos);
 }
+
+
 
