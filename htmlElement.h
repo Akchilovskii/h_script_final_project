@@ -58,6 +58,11 @@ private:
 	bool m_single = false;
 	int m_level;
 	bool is_css_element = false;
+
+	//temporatory date
+	unsigned int this_index = 0;
+	void set_this_index(unsigned int index);
+	unsigned int get_this_index();
 public:
 	explicit html_element(std::string name, int level);
 	~html_element();

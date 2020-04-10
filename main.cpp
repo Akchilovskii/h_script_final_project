@@ -3,7 +3,16 @@
 #include<string>
 #include<fstream>
 #include"asio_tcp_server.h"
+
+
 using namespace std;
+
+
+
+
+
+
+
 
 string keyboard_input(const char end_char)
 {
@@ -86,7 +95,7 @@ public:
 
 			if (post_context_vec.size() < 2)
 			{
-				cout<< "server processing error: didn't read user name or code"<< endl;
+				cout<< "warning! server processing: didn't read user name or code"<< endl;
 				username = "defaule new user";
 				code = "html.body";
 			}
@@ -132,7 +141,7 @@ public:
 
 int main()
 {
-	server_processing sp(9190);
+	/*server_processing sp(9190);
 	for (int i = 0; i < 10; i++)
 	{
 		sp.run();
@@ -174,7 +183,7 @@ int main()
 	server.send_by_server(sii.show_html_code());
 
 	//cout << str;
-	//return 1;
+	//return 1;*/
 	
 	//½Å±¾½âÊÍÆ÷
 	script_interpretor si;

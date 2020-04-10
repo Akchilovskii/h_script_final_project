@@ -78,6 +78,38 @@ inline string string_processor::cuttor(string_ref& str, int pos, int cut_len)
 	return res;
 }
 
+vector<string> string_processor::split(string str, string_protector& s_pro, symbol_locator& s_dev)
+{
+	vector<int> split_pos;
+	vector<string> result;
+	s_pro.feed(str);
+	for (auto i = s_dev.next();; i = s_dev.next())
+	{
+		if (!s_dev)
+			break;
+		if (s_pro & i)
+			continue;
+		split_pos.push_back(i.first);
+	}
+	split_pos.push_back(str.length());
+
+	for (int i = split_pos.size() - 1; i >= 1; --i)
+	{
+		split_pos[i] -= split_pos[i - 1];
+	}
+	offset_separator sep(split_pos.begin(), split_pos.end(), true, false);
+	tokenizer<offset_separator> tkiz(str, sep);
+	for (auto& x : tkiz)
+	{
+		result.push_back(x);
+	}
+	for (int i = 1; i < result.size(); i++)
+	{
+		result[i] = result[i].substr(1);
+	}
+	return result;
+}
+
 string_processor::string_protector::string_protector(string pro_one, string pro_two)
 {
 	protector = pair<string, string>(pro_one, pro_two);
@@ -139,6 +171,12 @@ pair<int, int> string_processor::string_protector::pro_pair()
 	auto one = pro_one();
 	auto two = pro_two();
 	return pair<int, int>(one, two);
+}
+
+pair<string, string>& string_processor::string_protector::get_protector()
+{
+	// TODO: 在此处插入 return 语句
+	return protector;
 }
 
 bool string_processor::string_protector::operator==(pair<int, int> out_pro)

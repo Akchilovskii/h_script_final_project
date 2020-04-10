@@ -24,64 +24,10 @@ void script_interpretor::script(string cmd)
 	script_thread(cmds_list.begin(), current_pos);
 }
 
-void script_interpretor::start_thread(vector<string>::iterator start_iter, weak_ptr<html_element> start_pos)
-{
-	for (; start_iter != cmds_list.end(); start_iter++)
-	{
-		sub_script(start_iter, start_pos);
-		
-	}
-}
 
-void script_interpretor::sub_script(vector<string>::iterator start_iter, weak_ptr<html_element>& current_pos)
-{
-	auto cmd = *start_iter;
-	if (cmd == "html")
-	{
-		current_pos = html;
-		return;
-	}
-	if (cmd == "body")
-	{
-		current_pos = body;
-		return;
-	}
-	if (cmd == "head")
-	{
-		current_pos = head;
-		return;
-	}
-	string name = cmd;
-	auto operation_bracket = bracket(cmd);
-	;
-	if (operation_bracket)
-	{
-		
-		name = cmd.substr(0, operation_bracket.start_pos);
 
-		h_selector selector(name, current_pos.lock());
 
-		auto bracket_thread = operation_bracket.value;
 
-		for (auto& i : operation_bracket.value) {
-			while (selector.size() <= i)
-			{
-				current_pos.lock()->add_element(name);
-				selector.update();
-			}
-			if (start_iter==cmds_list.end())
-			{
-				break;
-			}
-			start_thread(++start_iter, selector[i]);
-		}
-		
-	}
-	else
-	{
-		current_pos = current_pos.lock()->add_element(name);
-	}
-}
 
 
 
@@ -95,6 +41,10 @@ bool script_interpretor::assign(string cmd, std::weak_ptr<html_element>& cur_pos
 	if (attr[0] == "text")
 	{
 		cur_pos.lock()->text(attr[1]);
+	}
+	else if (attr[1]=="-")
+	{
+		(*(cur_pos.lock())) - attr[0];
 	}
 	else
 	{
@@ -135,26 +85,7 @@ vector<string> script_interpretor::spliter(string cmd, protector& s_pro, devider
 	}
 	return result;
 }
-typedef html_doc::html_element_selector h_selector;
-h_selector element_locator(string name, weak_ptr<html_element> current_position, int index = -1)
-{
-	h_selector selector(name, current_position.lock());
-	if (index==-1)
-	{
-		if (selector.size() < 0)
-			current_position.lock()->add_element(name);
-			
-	}
-	else
-	{
-		while(selector.size()<=index)
-		{
-			current_position.lock()->add_element(name);
-			selector.update();
-		}
-	}
-	return selector;
-}
+
 
 bool script_interpretor::in_special_position(string element_name, std::weak_ptr<html_element>& position)
 {
@@ -207,7 +138,7 @@ bool script_interpretor::is_special_symbol(string key_symbol, std::weak_ptr<html
 	}
 	if (key_symbol == "-")
 	{
-		h_selector selector(position.lock()->name(), position.lock()->father().lock());
+		html_selector selector(position.lock()->name(), position.lock()->father().lock());
 		int pos_index = selector.index(position.lock());
 		position = position.lock()->father();
 		(*position.lock()) - pos_index;
@@ -218,7 +149,7 @@ bool script_interpretor::is_special_symbol(string key_symbol, std::weak_ptr<html
 
 std::weak_ptr<html_element> script_interpretor::next(std::weak_ptr<html_element> position, string element_name, std::weak_ptr<html_element> this_addr)
 {
-	h_selector selector(element_name, position.lock()->father().lock());
+	html_selector selector(element_name, position.lock()->father().lock());
 	auto pos_index = selector.index(position.lock());
 	return selector[pos_index + 1];
 }
@@ -236,8 +167,10 @@ operation_int script_interpretor::bracket(string cmd)
 	}
 	taker _taker(cmd, op.s_pro, 1, 1);
 	auto value = _taker.take();
+
 	protector s_pro("[","]");
 	devider s_dev(",", value);
+
 	for (auto& i : spliter(value, s_pro, s_dev))
 	{
 		op.value.push_back(stoi(i));
@@ -255,6 +188,11 @@ void script_interpretor::script_thread(vector<string>::iterator iter, std::weak_
 	{
 		current_pos = cur_pos;
 		return;
+	}
+
+	if (parentheses_handler(iter, cur_pos))
+	{
+		return script_thread(++iter, cur_pos);
 	}
 	
 	if (is_special_word(*iter, cur_pos))
@@ -280,7 +218,7 @@ void script_interpretor::script_thread(vector<string>::iterator iter, std::weak_
 		auto name = (*iter).substr(0, script_arg.start_pos);
 		
 		//use html selector to collect all element inside current position
-		h_selector selector(name, cur_pos.lock());
+		html_selector selector(name, cur_pos.lock());
 
 		auto script_args = script_arg.value;
 
@@ -303,7 +241,7 @@ void script_interpretor::script_thread(vector<string>::iterator iter, std::weak_
 		return;
 	}
 	auto name = *iter;
-	h_selector selector(name, cur_pos.lock());
+	html_selector selector(name, cur_pos.lock());
 	if (selector.size() == 0)
 	{
 		cur_pos.lock()->add_element(name);
@@ -313,5 +251,58 @@ void script_interpretor::script_thread(vector<string>::iterator iter, std::weak_
 	return script_thread(++iter, current_pos);
 }
 
+bool script_interpretor::parentheses_handler(vector<string>::iterator iter, std::weak_ptr<html_element>& position)
+{
+	parentheses _parentheses;
+	auto arguments = _parentheses(*iter);
+	if (!arguments)
+		return false;
+	auto h_s_ptr_pos = position.lock();
+	//simulation of funtion calling
+	auto create_div_sec = [=](int width, int height, string color, string name)
+	{
+		script("style." + name + ".css");
+		//cout << show_html_code();
+		script("width=" + to_string(width) + ".height=" + to_string(height) + ".background=" + color);
+		script("html.body.div.id=" + name);
+		current_pos = position;
+	};
+	if (arguments.value.size() < 4)
+	{
+		throw "calling func error: no match funtion argc";
+	}
+	create_div_sec(stoi(arguments.value[0]), stoi(arguments.value[1]), arguments.value[2], arguments.value[3]);
+	cout << show_html_code();
+	return true;
+}
 
+script_interpretor::replacable_interpretor::replacable_interpretor()
+	:
+	symbols_list("%$*#")
+{}
 
+script_interpretor::operation<string>& script_interpretor::parentheses::operator()(string str)
+{
+	// TODO: 在此处插入 return 语句
+	if (contains(str, "(") && contains(str, ")"))
+	{
+		values.available = true;
+	}
+	else
+	{
+		values.available = false; 
+		return values;
+
+		
+	}
+	taker _taker(str, values.s_pro, 1, 1);
+	auto inner_content = _taker.take();
+	
+	devider s_dev(",", inner_content);
+	protector s_pro("\"");
+	s_pro.feed(inner_content);
+	values.value = string_processor::split(inner_content, s_pro, s_dev);
+	values.start_pos = values.s_pro.pro_one();
+	values.end_pos = values.s_pro.pro_two() + 1;
+	return values;
+}

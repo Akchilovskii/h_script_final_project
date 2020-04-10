@@ -5,6 +5,7 @@
 #include<iostream>
 #include<boost/algorithm/string.hpp>
 #include<vector>
+#include<boost/tokenizer.hpp>
 #include<map>
 
 using namespace std;
@@ -25,6 +26,7 @@ public:
 		int pro_one();
 		int pro_two();
 		pair<int, int> pro_pair();
+		pair<string, string>& get_protector();
 		bool operator ==(pair<int, int> out_pro);
 		bool operator !();
 		bool operator &(int position);
@@ -90,5 +92,7 @@ public:
 		bool token_end = false;
 		pair<string, string> non_concerned;
 	};
+
+	static vector<string> split(string str, string_protector& s_pro, symbol_locator& s_dev);
 };
 
