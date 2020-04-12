@@ -147,6 +147,14 @@ bool script_interpretor::is_special_symbol(string key_symbol, std::weak_ptr<html
 	return false;
 }
 
+bool script_interpretor::basic_parentheses_hadler(string command, std::weak_ptr<html_element>& position)
+{
+	parentheses<string> _parentheses("(", ")");
+	auto m_argv = _parentheses(command);
+	if(!m_argv)
+		return false;
+}
+
 std::weak_ptr<html_element> script_interpretor::next(std::weak_ptr<html_element> position, string element_name, std::weak_ptr<html_element> this_addr)
 {
 	html_selector selector(element_name, position.lock()->father().lock());
@@ -179,6 +187,17 @@ operation_int script_interpretor::bracket(string cmd)
 	op.start_pos = s_pro.pro_one();
 	op.end_pos = s_pro.pro_two() + 1;
 	return op;
+}
+
+void script_interpretor::track_pos(std::weak_ptr<html_element>& cur_pos, string command)
+{
+	html_selector selector(command, cur_pos.lock());
+	if (selector.size()==0)
+	{
+		cur_pos.lock()->add_element(command);
+		selector.update();
+	}
+	cur_pos = selector[0];
 }
 
 void script_interpretor::script_thread(vector<string>::iterator iter, std::weak_ptr<html_element> cur_pos)
@@ -251,58 +270,19 @@ void script_interpretor::script_thread(vector<string>::iterator iter, std::weak_
 	return script_thread(++iter, current_pos);
 }
 
-bool script_interpretor::parentheses_handler(vector<string>::iterator iter, std::weak_ptr<html_element>& position)
+
+void script_interpretor::run_script(vs_auto_iterator iter, std::weak_ptr<html_element>& position)
 {
-	parentheses _parentheses;
-	auto arguments = _parentheses(*iter);
-	if (!arguments)
-		return false;
-	auto h_s_ptr_pos = position.lock();
-	//simulation of funtion calling
-	auto create_div_sec = [=](int width, int height, string color, string name)
-	{
-		script("style." + name + ".css");
-		//cout << show_html_code();
-		script("width=" + to_string(width) + ".height=" + to_string(height) + ".background=" + color);
-		script("html.body.div.id=" + name);
-		current_pos = position;
-	};
-	if (arguments.value.size() < 4)
-	{
-		throw "calling func error: no match funtion argc";
-	}
-	create_div_sec(stoi(arguments.value[0]), stoi(arguments.value[1]), arguments.value[2], arguments.value[3]);
-	cout << show_html_code();
-	return true;
+	if (iter.reaches_end)
+		return;
 }
+
+
+
+
 
 script_interpretor::replacable_interpretor::replacable_interpretor()
 	:
 	symbols_list("%$*#")
 {}
 
-script_interpretor::operation<string>& script_interpretor::parentheses::operator()(string str)
-{
-	// TODO: 在此处插入 return 语句
-	if (contains(str, "(") && contains(str, ")"))
-	{
-		values.available = true;
-	}
-	else
-	{
-		values.available = false; 
-		return values;
-
-		
-	}
-	taker _taker(str, values.s_pro, 1, 1);
-	auto inner_content = _taker.take();
-	
-	devider s_dev(",", inner_content);
-	protector s_pro("\"");
-	s_pro.feed(inner_content);
-	values.value = string_processor::split(inner_content, s_pro, s_dev);
-	values.start_pos = values.s_pro.pro_one();
-	values.end_pos = values.s_pro.pro_two() + 1;
-	return values;
-}
