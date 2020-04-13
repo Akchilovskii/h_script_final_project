@@ -19,6 +19,16 @@ int h_attrib::size()
 	return attribs.size();
 }
 
+std::map<std::string, std::string>::iterator h_attrib::get_attribs_iter()
+{
+	return attribs.begin();
+}
+
+std::map<std::string, std::string>::iterator h_attrib::get_attribs_end_iter()
+{
+	return attribs.end();
+}
+
 std::string& h_attrib::operator[](std::string name)
 {
 	// TODO: 在此处插入 return 语句
@@ -41,6 +51,11 @@ std::string h_attrib::operator-(std::string name)
 	}
 	
 	return "warning : no such attrib!";
+}
+
+bool h_attrib::find_attrib(std::string attrib_name)
+{
+	return attribs.find(attrib_name) != attribs.end();
 }
 
 std::string h_attrib::attribs_list()
@@ -98,6 +113,16 @@ std::string css_element::attribs_list()
 
 
 
+void html_element::set_this_index(unsigned int index)
+{
+	this_index = index;
+}
+
+unsigned int html_element::get_this_index()
+{
+	return this_index;
+}
+
 html_element::html_element(std::string name, int level=0)
 	:
 	m_name(name),
@@ -132,9 +157,15 @@ std::string html_element::list_all_element(std::weak_ptr<html_element> ele)
 {
 	std::ostringstream oss;
 	auto shared_ele = ele.lock();
+
+	if (shared_ele->has_attrib("invisible") && (*shared_ele)["invisible"]=="true")
+	{
+		return "";
+	}
+	
 	if (shared_ele->size()<=0)
 	{
-		return shared_ele->str() + (shared_ele->single() ? "":"\n");
+		return shared_ele->str() + (shared_ele->is_single() ? "":"\n");
 	}
 	oss << shared_ele->begin() << "\n";
 	for (int i = 0; i < shared_ele->size(); i++)
@@ -147,7 +178,7 @@ std::string html_element::list_all_element(std::weak_ptr<html_element> ele)
 
 std::string& html_element::operator[](std::string name)
 {
-	if (css_element())
+	if (is_a_css_element())
 	{
 		return c_attribs[name];
 		
@@ -184,6 +215,22 @@ void html_element::operator-(int index)
 	elements.erase(elements.begin() + index);
 }
 
+std::map<std::string, std::string>::iterator html_element::get_attribs_iter()
+{
+	if (is_a_css_element())
+		return c_attribs.get_attribs_iter();
+	else
+		return attribs.get_attribs_iter();
+}
+
+std::map<std::string, std::string>::iterator html_element::get_attribs_end_iter()
+{
+	if (is_a_css_element())
+		return c_attribs.get_attribs_end_iter();
+	else
+		return attribs.get_attribs_end_iter();
+}
+
 void html_element::set_father(std::shared_ptr<html_element> father)
 {
 	father_ptr = father;
@@ -199,7 +246,7 @@ std::string html_element::begin()
 {
 	std::string attr_str;
 	std::ostringstream oss;
-	if (css_element())
+	if (is_a_css_element())
 	{
 		oss << push;
 		oss << name();
@@ -274,9 +321,21 @@ int html_element::size()
 	return elements.size();
 }
 
-void html_element::text(std::string text)
+void html_element::text(std::string str_text)
 {
-	inner_text = text;
+	auto my_get_rid_of_quote = [=](string& str)
+	{
+		if (str.length() == 0)
+			return;
+		if (str.front() == '\"' && str.back() == '\"')
+		{
+			str = str.substr(1);
+			str.pop_back();
+		}
+		return;
+	};
+	my_get_rid_of_quote(str_text);
+	inner_text += str_text;
 }
 
 void html_element::write_line(std::string text)
@@ -319,15 +378,22 @@ bool html_element::name_equal(std::string name)
 	return name == m_name;
 }
 
-bool html_element::single()
+bool html_element::is_single()
 {
 	return m_single;
 }
 
-bool html_element::css_element()
+bool html_element::is_a_css_element()
 {
 	return is_css_element;
 }
+
+bool html_element::has_attrib(std::string attrib_name)
+{
+	return attribs.find_attrib(attrib_name);
+}
+
+
 
 std::string html_element::name()
 {

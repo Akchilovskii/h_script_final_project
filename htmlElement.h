@@ -8,6 +8,7 @@
 #include<boost/algorithm/string.hpp>
 #include<boost/utility/string_ref.hpp>
 #include<iostream>
+#include"my_utilities.hpp"
 
 
 using string_ref = boost::string_ref;
@@ -18,11 +19,12 @@ public:
 	h_attrib(std::string name, std::string value);
 	h_attrib();
 	int size();
-
+	std::map<std::string, std::string>::iterator get_attribs_iter();
+	std::map<std::string, std::string>::iterator get_attribs_end_iter();
 
 	std::string& operator[](std::string);
 	std::string operator-(std::string);
-
+	bool find_attrib(std::string attrib_name);
 
 	virtual std::string attribs_list();
 protected:
@@ -58,6 +60,7 @@ private:
 	bool m_single = false;
 	int m_level;
 	bool is_css_element = false;
+	bool m_invisible = false;
 
 	//temporatory date
 	unsigned int this_index = 0;
@@ -74,6 +77,8 @@ public:
 	std::shared_ptr<html_element>& operator[](int index);
 	std::string operator-(std::string name);
 	void operator-(int index);
+	std::map<std::string, std::string>::iterator get_attribs_iter();
+	std::map<std::string, std::string>::iterator get_attribs_end_iter();
 	void set_father(std::shared_ptr<html_element> father);
 	std::weak_ptr<html_element> father();
 
@@ -94,10 +99,12 @@ public:
 	void set_single();
 	void set_to_css();
 	void store_self(std::shared_ptr<html_element> self);
+	
 
 	bool name_equal(std::string name);
-	bool single();
-	bool css_element();
+	bool is_single();
+	bool is_a_css_element();
+	bool has_attrib(std::string attrib_name);
 
 	std::string name();
 };

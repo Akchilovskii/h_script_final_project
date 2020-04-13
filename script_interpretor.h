@@ -27,7 +27,6 @@ using std::ifstream;
 using std::ofstream;
 class script_interpretor
 {
-	friend class parenthese;
 	typedef string_processor::string_protector protector;
 	typedef string_processor::symbol_locator devider;
 	typedef string_processor::protector_token taker;
@@ -58,14 +57,76 @@ public:
 	bool in_special_position(string element_name, std::weak_ptr<html_element>& position);
 	bool is_special_word(string key_word, std::weak_ptr<html_element>& position);
 	bool is_special_symbol(string key_symbol, std::weak_ptr<html_element>& position);
-	bool basic_parentheses_hadler(string command, std::weak_ptr<html_element>& position);
+	bool basic_parentheses_handler(string command, std::weak_ptr<html_element>& position);
+	bool square_bracket_handler(vs_auto_iterator iter, std::weak_ptr<html_element>& position);
 
 	////opration function
 	
 	std::weak_ptr<html_element> next(std::weak_ptr<html_element> position, string element_name, std::weak_ptr<html_element> this_addr);
-	operation<int> bracket(string cmd);
 	void track_pos(std::weak_ptr<html_element>& cur_pos, string command);
-	void script_thread(vector<string>::iterator iter, std::weak_ptr<html_element> cur_pos);// being used function
+	
+	void increase_element(unsigned int num, string element_name, std::weak_ptr<html_element>& position);
+
+	class name_extractor
+	{
+	private:
+		string m_command;
+		string m_special_symbols_list;
+		string m_command_value;
+		std::weak_ptr<html_element> m_position;
+		bool replacable = false;
+	public:
+		explicit name_extractor(std::weak_ptr<html_element> position)
+			:
+			m_position(position)
+		{}
+		string& m_func_tag(string str)
+		{
+			int num = 0;
+			int cnt = 0;
+			auto atr_iter = m_position.lock()->get_attribs_iter();
+			if (conversion::try_lexical_convert(str, num))
+			{
+				for (; atr_iter != m_position.lock()->get_attribs_end_iter() && cnt < num; ++atr_iter, ++cnt)
+				{
+					;
+				}
+				if (atr_iter == m_position.lock()->get_attribs_end_iter())
+				{
+					throw "attribs selector out of range";
+				}
+				m_command_value = atr_iter->second;
+				return (*m_position.lock())[atr_iter->first];
+			}
+			else
+			{
+				return (*m_position.lock())[str];
+			}
+		}
+		string& operator()(string str)
+		{
+			m_command = str;
+			char str_prefix = str[0];
+			str = str.substr(1);
+			switch (str_prefix)
+			{
+			case '#':
+				replacable = true;
+				return m_func_tag(str);
+			default:
+				return (*m_position.lock())[m_command];
+				break;
+			}
+		}
+		string value()
+		{
+			return m_command_value;
+		}
+		operator bool()
+		{
+			return replacable;
+		}
+	};
 
 	class replacable_interpretor
 	{
@@ -91,10 +152,12 @@ public:
 	
 	
 
-	void run_script(vs_auto_iterator iter, std::weak_ptr<html_element>& position);
+	void run_script(vs_auto_iterator iter, std::weak_ptr<html_element> position);
+
+	void debug(bool _debug_on);
 private:
 	//default and special positions
-	std::shared_ptr<html_element> html,head,body,div;
+	std::shared_ptr<html_element> html,head,body,style,code,ele,func;
 
 	std::weak_ptr<html_element> current_pos;
 	vector<string> cmds_list;
@@ -111,17 +174,20 @@ inline script_interpretor::operation<Arg>::operation(string op_one, string op_tw
 template<typename arg_type>
 inline script_interpretor::operation<arg_type>& script_interpretor::parentheses<arg_type>::operator()(string str)
 {
-	// TODO: 在此处插入 return 语句
+	
 	auto pro_pair_str = values.s_pro.get_protector();
+	values.s_pro.feed(str);
 
 	if (!contains(str, pro_pair_str.first) | !contains(str, pro_pair_str.second))
 	{
 		values.available = false;
 		return values;
 	}
-	taker _taker(str, values.s_pro, 1, 1);
+
+	values.available = true;
+	taker _taker(str, values.s_pro, pro_pair_str.first.length(), pro_pair_str.second.length());
 	auto token_str = _taker.take();
-	devider s_dev(",");
+	devider s_dev(",",token_str);
 	protector s_pro("\"");
 	s_pro.feed(token_str);
 	auto str_vec = string_processor::split(token_str, s_pro, s_dev);
@@ -131,5 +197,7 @@ inline script_interpretor::operation<arg_type>& script_interpretor::parentheses<
 		args_value.push_back(lexical_cast<arg_type>(i));
 	}
 	values.value = args_value;
+	values.start_pos = values.s_pro.pro_one();
+	values.end_pos = values.s_pro.pro_two() + 1;
 	return values;
 }

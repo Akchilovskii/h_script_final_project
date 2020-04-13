@@ -8,6 +8,11 @@ script_interpretor::script_interpretor()
 	html->store_self(html);
 	head = html->add_element("head");
 	body = html->add_element("body");
+	style = body->add_element("style");
+	code = html->add_element("code");
+	(*code)["invisible"] = "true";
+	ele = code->add_element("ele");
+	func = code->add_element("func");
 	current_pos = html;
 }
 
@@ -21,7 +26,12 @@ void script_interpretor::script(string cmd)
 	protector s_pro("\"");
 	devider s_dev(".", cmd);
 	cmds_list = spliter(cmd, s_pro, s_dev);
-	script_thread(cmds_list.begin(), current_pos);
+	if (cmds_list.size() == 0)
+	{
+		return;
+	}
+	vs_auto_iterator iter(cmds_list);
+	run_script(iter, current_pos);
 }
 
 
@@ -36,9 +46,17 @@ bool script_interpretor::assign(string cmd, std::weak_ptr<html_element>& cur_pos
 	if(!contains(cmd,"="))
 		return false;
 	devider s_dev("=",cmd);
-	protector s_pro("none_protector");
-	auto attr = spliter(cmd, s_pro, s_dev);
+	protector s_pro("\"");
+	auto attr = string_processor::split(cmd, s_pro, s_dev);
+	if (attr.size() != 2)
+	{
+		return false;
+	}
 	if (attr[0] == "text")
+	{
+		cur_pos.lock()->text(attr[1]);
+	}
+	if (attr[0] == "in")
 	{
 		cur_pos.lock()->text(attr[1]);
 	}
@@ -48,7 +66,10 @@ bool script_interpretor::assign(string cmd, std::weak_ptr<html_element>& cur_pos
 	}
 	else
 	{
-		(*cur_pos.lock())[attr[0]] = attr[1];
+		name_extractor ne(cur_pos);
+		string& name = ne(attr[0]);
+		string value = ne(attr[0]);
+		name = attr[1];
 	}
 	
 	return true;
@@ -104,6 +125,26 @@ bool script_interpretor::in_special_position(string element_name, std::weak_ptr<
 		position = body;
 		return true;
 	}
+	if (element_name == "style")
+	{
+		position = style;
+		return true;
+	}
+	if (element_name == "code")
+	{
+		position = style;
+		return true;
+	}
+	if (element_name == "ele")
+	{
+		position = ele;
+		return true;
+	}
+	if (element_name == "func")
+	{
+		position = func;
+		return true;
+	}
 	return false;
 }
 
@@ -147,12 +188,36 @@ bool script_interpretor::is_special_symbol(string key_symbol, std::weak_ptr<html
 	return false;
 }
 
-bool script_interpretor::basic_parentheses_hadler(string command, std::weak_ptr<html_element>& position)
+bool script_interpretor::basic_parentheses_handler(string command, std::weak_ptr<html_element>& position)
 {
 	parentheses<string> _parentheses("(", ")");
 	auto m_argv = _parentheses(command);
 	if(!m_argv)
 		return false;
+}
+
+bool script_interpretor::square_bracket_handler(vs_auto_iterator iter, std::weak_ptr<html_element>& position)
+{
+	parentheses<int> _parentheses("[", "]");
+	
+	auto ele_args = _parentheses(iter.str());
+	if (!ele_args)
+		return false;
+
+	auto element_name = iter.str().substr(0, ele_args.s_pro.pro_one());
+
+	for (auto& i : ele_args.value) 
+	{
+		increase_element(i, element_name, position);
+	}
+
+	html_selector selector(element_name, position.lock());
+	++iter;
+	for (auto& x : ele_args.value)
+	{
+		run_script(iter, selector[x]);
+	}
+	return true;
 }
 
 std::weak_ptr<html_element> script_interpretor::next(std::weak_ptr<html_element> position, string element_name, std::weak_ptr<html_element> this_addr)
@@ -162,32 +227,7 @@ std::weak_ptr<html_element> script_interpretor::next(std::weak_ptr<html_element>
 	return selector[pos_index + 1];
 }
 
-operation_int script_interpretor::bracket(string cmd)
-{
-	operation<int> op("[", "]");
-	if (contains(cmd,"[")&&contains(cmd,"]"))
-	{
-		op.available = true;
-	}
-	else
-	{
-		return op;
-	}
-	taker _taker(cmd, op.s_pro, 1, 1);
-	auto value = _taker.take();
 
-	protector s_pro("[","]");
-	devider s_dev(",", value);
-
-	for (auto& i : spliter(value, s_pro, s_dev))
-	{
-		op.value.push_back(stoi(i));
-	}
-	s_pro.feed(cmd);
-	op.start_pos = s_pro.pro_one();
-	op.end_pos = s_pro.pro_two() + 1;
-	return op;
-}
 
 void script_interpretor::track_pos(std::weak_ptr<html_element>& cur_pos, string command)
 {
@@ -200,81 +240,58 @@ void script_interpretor::track_pos(std::weak_ptr<html_element>& cur_pos, string 
 	cur_pos = selector[0];
 }
 
-void script_interpretor::script_thread(vector<string>::iterator iter, std::weak_ptr<html_element> cur_pos)
+
+
+void script_interpretor::increase_element(unsigned int num, string element_name, std::weak_ptr<html_element>& position)
 {
-	
-	if (iter == cmds_list.end())
-	{
-		current_pos = cur_pos;
-		return;
-	}
+	html_selector selector(element_name, position.lock());
 
-	if (parentheses_handler(iter, cur_pos))
+	while (selector.size() <= num)
 	{
-		return script_thread(++iter, cur_pos);
-	}
-	
-	if (is_special_word(*iter, cur_pos))
-	{
-		return script_thread(++iter, cur_pos);
-	}
-	if (is_special_symbol(*iter, cur_pos))
-	{
-		return script_thread(++iter, cur_pos);
-	}
-	if (assign(*iter, cur_pos))
-	{
-		return script_thread(++iter, cur_pos);
-	}
-	if (in_special_position(*iter, cur_pos))
-	{
-		current_pos = cur_pos;
-		return script_thread(++iter, cur_pos);
-	}
-	auto script_arg = bracket(*iter);
-	if (script_arg)
-	{
-		auto name = (*iter).substr(0, script_arg.start_pos);
-		
-		//use html selector to collect all element inside current position
-		html_selector selector(name, cur_pos.lock());
-
-		auto script_args = script_arg.value;
-
-		for (auto& i : script_args)
-		{
-			while (selector.size() <= i)
-			{
-			
-				cur_pos.lock()->add_element(name);
-
-				//super slowly updating, can't do much about this....
-				selector.update();
-			}
-		}
-		++iter;
-		for (auto& i : script_args)
-		{
-			script_thread(iter, selector[i]);
-		}
-		return;
-	}
-	auto name = *iter;
-	html_selector selector(name, cur_pos.lock());
-	if (selector.size() == 0)
-	{
-		cur_pos.lock()->add_element(name);
+		position.lock()->add_element(element_name);
 		selector.update();
 	}
-	current_pos = selector[0];
-	return script_thread(++iter, current_pos);
 }
 
 
-void script_interpretor::run_script(vs_auto_iterator iter, std::weak_ptr<html_element>& position)
+void script_interpretor::run_script(vs_auto_iterator iter, std::weak_ptr<html_element> position)
 {
 	if (iter.reaches_end)
+	{
+		current_pos = position;
 		return;
+	}
+
+	if (is_special_word(iter.str(),position))
+	{
+		return run_script(++iter, position);
+	}
+	if (is_special_symbol(iter.str(), position))
+	{
+		return run_script(++iter, position);
+	}
+	if (in_special_position(iter.str(), position))
+	{
+		return run_script(++iter, position);
+	}
+	if (assign(iter.str(), position))
+	{
+		return run_script(++iter, position);
+	}
+	if (square_bracket_handler(iter, position))
+	{
+		return;
+	}
+	track_pos(position, iter.str());
+	return run_script(++iter, position);
+}
+
+void script_interpretor::debug(bool _debug_on)
+{
+	if (_debug_on)
+		(*code)["invisible"] = "false";
+	else
+		(*code)["invisible"] = "true";
 }
 
 
@@ -283,6 +300,6 @@ void script_interpretor::run_script(vs_auto_iterator iter, std::weak_ptr<html_el
 
 script_interpretor::replacable_interpretor::replacable_interpretor()
 	:
-	symbols_list("%$*#")
+	symbols_list("%$*#-")
 {}
 

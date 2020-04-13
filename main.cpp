@@ -202,7 +202,8 @@ int main()
 			“>>”符号滚动至同目录下，下一个同名标签
 			“<”符号返回上一级目录
 		*/
-		ifstream inf("Akchilov.hScript");
+		ifstream inf("code.hScript");
+		si.debug(true);
 		if (!inf)
 		{
 			throw "file failed";
@@ -211,6 +212,7 @@ int main()
 		while (getline(inf,cmd))
 		{
 			//cout << cmd << endl;
+			cout << cmd << endl;
 			si.script(cmd);
 		}
 		inf.close();
@@ -223,6 +225,7 @@ int main()
 	{
 		cout << si.show_html_code();
 		cout << e;
+		cout << endl;
 		return -1;
 	}
 	

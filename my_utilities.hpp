@@ -1,4 +1,9 @@
 #pragma once
+#include<string>
+#include<vector>
+
+using std::string;
+using std::vector;
 struct vs_auto_iterator
 {
 	typedef vector<string>::iterator vs_iter;
@@ -17,15 +22,19 @@ struct vs_auto_iterator
 	}
 	string str()
 	{
-		return *(cur_iter);
+		if (reaches_end)
+		{
+			return "";
+		}
+		else
+			return *(cur_iter);
 	}
 
-	vs_iter operator++()
+	vs_auto_iterator operator++()
 	{
 		if (cur_iter == end_iter)
 		{
 			reaches_end = true;
-			return cur_iter;
 		}
 		else
 		{
@@ -33,15 +42,20 @@ struct vs_auto_iterator
 			{
 				at_start = false;
 			}
-			return cur_iter++;
+			++cur_iter;
+			if (cur_iter == end_iter)
+			{
+				reaches_end = true;
+			}
 		}
+		return *this;
 	}
-	vs_iter operator--()
+	vs_auto_iterator operator--()
 	{
 		if (cur_iter == start_iter)
 		{
 			at_start = true;
-			return cur_iter;
+			
 		}
 		else
 		{
@@ -49,7 +63,15 @@ struct vs_auto_iterator
 			{
 				reaches_end = false;
 			}
-			return cur_iter--;
+			--cur_iter;
+			if (cur_iter == start_iter)
+			{
+				at_start = true;
+
+			}
+			return *this;
 		}
 	}
+	
 };
+
