@@ -38,14 +38,13 @@ public:
 	void script(string cmd);
 
 	
-	bool assign(string cmd, std::weak_ptr<html_element>& cur_pos);
-	vector<string> spliter(string cmd, protector& s_pro, devider& s_dev);
-	template<typename Arg>
+	
+	template<typename arg_type>
 	struct operation
 	{
 		operation(string op_one, string op_two);
 		protector s_pro;
-		vector<Arg> value;
+		vector<arg_type> value;
 		bool available;
 		int start_pos = -1;
 		int end_pos = -1;
@@ -54,6 +53,7 @@ public:
 			return available;
 		}
 	};
+	bool assign(string cmd, std::weak_ptr<html_element>& cur_pos);
 	bool in_special_position(string element_name, std::weak_ptr<html_element>& position);
 	bool is_special_word(string key_word, std::weak_ptr<html_element>& position);
 	bool is_special_symbol(string key_symbol, std::weak_ptr<html_element>& position);
@@ -64,79 +64,16 @@ public:
 	
 	std::weak_ptr<html_element> next(std::weak_ptr<html_element> position, string element_name, std::weak_ptr<html_element> this_addr);
 	void track_pos(std::weak_ptr<html_element>& cur_pos, string command);
-	
 	void increase_element(unsigned int num, string element_name, std::weak_ptr<html_element>& position);
 
-	class name_extractor
+	enum r_or_l
 	{
-	private:
-		string m_command;
-		string m_special_symbols_list;
-		string m_command_value;
-		std::weak_ptr<html_element> m_position;
-		bool replacable = false;
-	public:
-		explicit name_extractor(std::weak_ptr<html_element> position)
-			:
-			m_position(position)
-		{}
-		string& m_func_tag(string str)
-		{
-			int num = 0;
-			int cnt = 0;
-			auto atr_iter = m_position.lock()->get_attribs_iter();
-			if (conversion::try_lexical_convert(str, num))
-			{
-				for (; atr_iter != m_position.lock()->get_attribs_end_iter() && cnt < num; ++atr_iter, ++cnt)
-				{
-					;
-				}
-				if (atr_iter == m_position.lock()->get_attribs_end_iter())
-				{
-					throw "attribs selector out of range";
-				}
-				m_command_value = atr_iter->second;
-				return (*m_position.lock())[atr_iter->first];
-			}
-			else
-			{
-				return (*m_position.lock())[str];
-			}
-		}
-		string& operator()(string str)
-		{
-			m_command = str;
-			char str_prefix = str[0];
-			str = str.substr(1);
-			switch (str_prefix)
-			{
-			case '#':
-				replacable = true;
-				return m_func_tag(str);
-			default:
-				return (*m_position.lock())[m_command];
-				break;
-			}
-		}
-		string value()
-		{
-			return m_command_value;
-		}
-		operator bool()
-		{
-			return replacable;
-		}
+		r_value,
+		l_value
 	};
+	bool attr_fetcher(string& fetching_attr, std::weak_ptr<html_element>& position, r_or_l rl = l_value);
 
-	class replacable_interpretor
-	{
-	private:
-		map<string,unsigned int> values_vec;
-		string symbols_list;
-	public:
-		replacable_interpretor();
-	};
-	
+	string replacable_interpretor(string& original_str, std::weak_ptr<html_element>& position, r_or_l rl = l_value);
 	template<typename arg_type>
 	class parentheses
 	{
@@ -163,8 +100,8 @@ private:
 	vector<string> cmds_list;
 };
 
-template<typename Arg>
-inline script_interpretor::operation<Arg>::operation(string op_one, string op_two)
+template<typename arg_type>
+inline script_interpretor::operation<arg_type>::operation(string op_one, string op_two)
 	:
 	s_pro(op_one, op_two),
 	available(false)

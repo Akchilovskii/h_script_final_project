@@ -25,11 +25,10 @@ void script_interpretor::script(string cmd)
 {
 	protector s_pro("\"");
 	devider s_dev(".", cmd);
-	cmds_list = spliter(cmd, s_pro, s_dev);
+	cmds_list = string_processor::split(cmd, s_pro, s_dev);
 	if (cmds_list.size() == 0)
-	{
 		return;
-	}
+
 	vs_auto_iterator iter(cmds_list);
 	run_script(iter, current_pos);
 }
@@ -52,9 +51,16 @@ bool script_interpretor::assign(string cmd, std::weak_ptr<html_element>& cur_pos
 	{
 		return false;
 	}
-	if (attr[0] == "text")
+	if (attr[0] == "source")
 	{
 		cur_pos.lock()->text(attr[1]);
+		return true;
+	}
+	if (attr[0] == "text")
+	{
+		attr[1] = replacable_interpretor(attr[1], cur_pos, r_value);
+		cur_pos.lock()->text(attr[1]);
+		return true;
 	}
 	if (attr[0] == "in")
 	{
@@ -66,45 +72,12 @@ bool script_interpretor::assign(string cmd, std::weak_ptr<html_element>& cur_pos
 	}
 	else
 	{
-		name_extractor ne(cur_pos);
-		string& name = ne(attr[0]);
-		string value = ne(attr[0]);
-		name = attr[1];
+		attr[0] = replacable_interpretor(attr[0], cur_pos);
+		attr[1] = replacable_interpretor(attr[1], cur_pos);
+		(*(cur_pos).lock())[attr[0]] = attr[1];
 	}
 	
 	return true;
-}
-
-vector<string> script_interpretor::spliter(string cmd, protector& s_pro, devider& s_dev)
-{
-	vector<int> split_pos;
-	vector<string> result;
-	s_pro.feed(cmd);
-	for (auto i = s_dev.next();; i = s_dev.next())
-	{
-		if (!s_dev)
-			break;
-		if (s_pro & i)
-			continue;
-		split_pos.push_back(i.first);
-	}
-	split_pos.push_back(cmd.length());
-
-	for (int i = split_pos.size()-1; i >= 1; --i)
-	{
-		split_pos[i] -= split_pos[i - 1];
-	}
-	offset_separator sep(split_pos.begin(), split_pos.end(), true, false);
-	tokenizer<offset_separator> tkiz(cmd, sep);
-	for (auto& x : tkiz)
-	{
-		result.push_back(x);
-	}
-	for (int i = 1; i < result.size(); i++)
-	{
-		result[i] = result[i].substr(1);
-	}
-	return result;
 }
 
 
@@ -194,6 +167,39 @@ bool script_interpretor::basic_parentheses_handler(string command, std::weak_ptr
 	auto m_argv = _parentheses(command);
 	if(!m_argv)
 		return false;
+	auto func_name = command.substr(0, m_argv.start_pos);
+	html_selector selector(func_name, func);
+	if (selector.size() == 0)
+	{
+		throw "function calling error : undefined function";
+	}
+	auto command_line = selector[0]->get_inner_text();
+	(*(selector[0]))["str"] = m_argv.value[0];
+	std::weak_ptr<html_element> selected_ele = selector[0];
+	protector s_pro("\"");
+	devider s_dev(".", command_line);
+	auto func_cmds_list = string_processor::split(command_line, s_pro, s_dev);
+	for (auto& x : func_cmds_list)
+	{
+		if (contains(x, "#"))
+		{
+			auto attr_name = x.substr(x.find('#'));
+			int ori_len = attr_name.length();
+			attr_name = replacable_interpretor(attr_name, selected_ele, r_value);
+			x.replace(x.find('#'), ori_len, attr_name);
+		}
+		if (x.length() >= 2 && x.front() == '"' && x.back() == '"')
+		{
+			x = x.substr(1);
+			x.pop_back();
+		}
+	}
+	vs_auto_iterator func_iter(func_cmds_list);
+	for (auto& x : func_cmds_list)
+	{
+		script(x);
+	}
+	return true;
 }
 
 bool script_interpretor::square_bracket_handler(vs_auto_iterator iter, std::weak_ptr<html_element>& position)
@@ -253,6 +259,54 @@ void script_interpretor::increase_element(unsigned int num, string element_name,
 	}
 }
 
+bool script_interpretor::attr_fetcher(string& fetching_attr, std::weak_ptr<html_element>& position, r_or_l rl)
+{
+	int num = 0;
+	int cnt = 0;
+	if (conversion::try_lexical_convert(fetching_attr, num))
+	{
+		auto attr_iter = position.lock()->get_attribs_iter();
+		auto attr_end_iter = position.lock()->get_attribs_end_iter();
+		for (; attr_iter != attr_end_iter, cnt < num; attr_iter++, cnt++);
+		if (attr_iter == attr_end_iter)
+			return false;
+		fetching_attr = (rl == r_value ? attr_iter->second : attr_iter->first);
+		return true;
+	}
+	else if (position.lock()->has_attrib(fetching_attr))
+	{
+		fetching_attr = (rl == r_value ? (*position.lock())[fetching_attr] : fetching_attr);
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+string script_interpretor::replacable_interpretor(string& original_str, std::weak_ptr<html_element>& position, r_or_l rl)
+{
+	char prefix_operator = original_str[0];
+	string target_str = original_str.substr(1);
+	switch (prefix_operator)
+	{
+	case '#':
+	{
+		if (!attr_fetcher(target_str, position, rl))
+		{
+			throw "attr_fetcher error : no such attribute";
+		}
+		return target_str;
+		break;
+	}
+		
+	default:
+		return original_str;
+		break;
+	}
+	return string();
+}
+
 
 void script_interpretor::run_script(vs_auto_iterator iter, std::weak_ptr<html_element> position)
 {
@@ -282,6 +336,10 @@ void script_interpretor::run_script(vs_auto_iterator iter, std::weak_ptr<html_el
 	{
 		return;
 	}
+	if (basic_parentheses_handler(iter.str(),position))
+	{
+		return;
+	}
 	track_pos(position, iter.str());
 	return run_script(++iter, position);
 }
@@ -297,9 +355,4 @@ void script_interpretor::debug(bool _debug_on)
 
 
 
-
-script_interpretor::replacable_interpretor::replacable_interpretor()
-	:
-	symbols_list("%$*#-")
-{}
 

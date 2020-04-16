@@ -309,6 +309,11 @@ std::string html_element::str()
 	return oss.str();
 }
 
+std::string html_element::get_inner_text()
+{
+	return inner_text;
+}
+
 
 
 int html_element::level()

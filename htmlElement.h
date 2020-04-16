@@ -85,6 +85,7 @@ public:
 	std::string begin();
 	std::string close();
 	std::string str();
+	std::string get_inner_text();
 	//std::string final_str();
 
 

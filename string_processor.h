@@ -10,6 +10,13 @@
 
 using namespace std;
 using namespace boost;
+
+
+//the string_processor itself does not handle any string processing
+//use string_processor::split(string, string_protector&, symbol_locator&) to handle the spliting
+//use string_processor::string_protector to protect a complete statement while the spliting working w/ any protector you wish
+//use string_processor::symbol_locator to locate and iterate all symbols in a string
+//use string_processor::protector_token to extract string in a given protector
 class string_processor
 {
 public:

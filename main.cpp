@@ -203,7 +203,7 @@ int main()
 			“<”符号返回上一级目录
 		*/
 		ifstream inf("code.hScript");
-		si.debug(true);
+		si.debug(false);
 		if (!inf)
 		{
 			throw "file failed";
