@@ -209,17 +209,21 @@ int main()
 			throw "file failed";
 		}
 		string cmd;
+		cout << "hScript源码:" << endl;
 		while (getline(inf,cmd))
 		{
 			//cout << cmd << endl;
 			cout << cmd << endl;
 			si.script(cmd);
+			//cout << "\r\n current at: "<<si.print_current_position() << endl;
 		}
 		inf.close();
+		cout << "\nhtml代码如下\n" << endl;
 		cout<<si.show_html_code();
 		ofstream outf("out.html");
 		outf << si.show_html_code();
 		outf.close();
+		cout << "已保存至文件" << endl;
 	}
 	catch (const char * e) //抛出字符串常量，请勿模仿。。。。
 	{

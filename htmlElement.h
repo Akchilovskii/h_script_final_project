@@ -4,6 +4,7 @@
 #include<iostream>
 #include<sstream>
 #include<map>
+#include<unordered_map>
 #include<memory>
 #include<boost/algorithm/string.hpp>
 #include<boost/utility/string_ref.hpp>
@@ -19,8 +20,9 @@ public:
 	h_attrib(std::string name, std::string value);
 	h_attrib();
 	int size();
-	std::map<std::string, std::string>::iterator get_attribs_iter();
-	std::map<std::string, std::string>::iterator get_attribs_end_iter();
+	
+	std::unordered_map<std::string, std::string>::iterator get_attribs_iter();
+	std::unordered_map<std::string, std::string>::iterator get_attribs_end_iter();
 
 	std::string& operator[](std::string);
 	std::string operator-(std::string);
@@ -29,7 +31,7 @@ public:
 	virtual std::string attribs_list();
 protected:
 	int attrib_cnt;
-	std::map<std::string, std::string> attribs;
+	std::unordered_map<std::string, std::string> attribs;
 };
 
 class css_element : public h_attrib
@@ -64,9 +66,10 @@ private:
 
 	//temporatory date
 	unsigned int this_index = 0;
+	
+public:
 	void set_this_index(unsigned int index);
 	unsigned int get_this_index();
-public:
 	explicit html_element(std::string name, int level);
 	~html_element();
 	std::shared_ptr<html_element>& add_element(std::string name);
@@ -77,8 +80,8 @@ public:
 	std::shared_ptr<html_element>& operator[](int index);
 	std::string operator-(std::string name);
 	void operator-(int index);
-	std::map<std::string, std::string>::iterator get_attribs_iter();
-	std::map<std::string, std::string>::iterator get_attribs_end_iter();
+	std::unordered_map<std::string, std::string>::iterator get_attribs_iter();
+	std::unordered_map<std::string, std::string>::iterator get_attribs_end_iter();
 	void set_father(std::shared_ptr<html_element> father);
 	std::weak_ptr<html_element> father();
 

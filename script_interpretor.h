@@ -86,6 +86,9 @@ public:
 		{}
 		operation<arg_type>& operator()(string str);
 	};
+	map<string, int> current(std::weak_ptr<html_element> position);
+
+	string print_current_position(std::weak_ptr<html_element> position);
 	
 	
 

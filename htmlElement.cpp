@@ -19,12 +19,12 @@ int h_attrib::size()
 	return attribs.size();
 }
 
-std::map<std::string, std::string>::iterator h_attrib::get_attribs_iter()
+std::unordered_map<std::string, std::string>::iterator h_attrib::get_attribs_iter()
 {
 	return attribs.begin();
 }
 
-std::map<std::string, std::string>::iterator h_attrib::get_attribs_end_iter()
+std::unordered_map<std::string, std::string>::iterator h_attrib::get_attribs_end_iter()
 {
 	return attribs.end();
 }
@@ -215,7 +215,7 @@ void html_element::operator-(int index)
 	elements.erase(elements.begin() + index);
 }
 
-std::map<std::string, std::string>::iterator html_element::get_attribs_iter()
+std::unordered_map<std::string, std::string>::iterator html_element::get_attribs_iter()
 {
 	if (is_a_css_element())
 		return c_attribs.get_attribs_iter();
@@ -223,7 +223,7 @@ std::map<std::string, std::string>::iterator html_element::get_attribs_iter()
 		return attribs.get_attribs_iter();
 }
 
-std::map<std::string, std::string>::iterator html_element::get_attribs_end_iter()
+std::unordered_map<std::string, std::string>::iterator html_element::get_attribs_end_iter()
 {
 	if (is_a_css_element())
 		return c_attribs.get_attribs_end_iter();

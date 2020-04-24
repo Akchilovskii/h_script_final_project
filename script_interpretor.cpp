@@ -173,25 +173,40 @@ bool script_interpretor::basic_parentheses_handler(string command, std::weak_ptr
 	{
 		throw "function calling error : undefined function";
 	}
+	auto html_func_invoke = [=](vector<string>& cmds_list, std::weak_ptr<html_element> func)
+	{
+		auto attr_iter = func.lock()->get_attribs_iter();
+		auto attr_end_iter = func.lock()->get_attribs_end_iter();
+
+		for (auto& i : cmds_list)
+		{
+			if (attr_iter == attr_end_iter)
+				throw "too many arguments for this function";
+			attr_iter->second = i;
+			++attr_iter;
+		}
+
+	};
 	auto command_line = selector[0]->get_inner_text();
-	(*(selector[0]))["str"] = m_argv.value[0];
+	//m_argv.value.push_back(print_current_position(position));
+	html_func_invoke(m_argv.value, selector[0]);
 	std::weak_ptr<html_element> selected_ele = selector[0];
 	protector s_pro("\"");
 	devider s_dev(".", command_line);
 	auto func_cmds_list = string_processor::split(command_line, s_pro, s_dev);
 	for (auto& x : func_cmds_list)
 	{
+		if (x.length() >= 2 && x.front() == '"' && x.back() == '"')
+		{
+			x = x.substr(1);
+			x.pop_back();
+		}
 		if (contains(x, "#"))
 		{
 			auto attr_name = x.substr(x.find('#'));
 			int ori_len = attr_name.length();
 			attr_name = replacable_interpretor(attr_name, selected_ele, r_value);
 			x.replace(x.find('#'), ori_len, attr_name);
-		}
-		if (x.length() >= 2 && x.front() == '"' && x.back() == '"')
-		{
-			x = x.substr(1);
-			x.pop_back();
 		}
 	}
 	vs_auto_iterator func_iter(func_cmds_list);
@@ -221,6 +236,7 @@ bool script_interpretor::square_bracket_handler(vs_auto_iterator iter, std::weak
 	++iter;
 	for (auto& x : ele_args.value)
 	{
+		selector[x]->set_this_index(x);
 		run_script(iter, selector[x]);
 	}
 	return true;
@@ -308,13 +324,48 @@ string script_interpretor::replacable_interpretor(string& original_str, std::wea
 }
 
 
+map<string, int> script_interpretor::current(std::weak_ptr<html_element> position)
+{
+	map<string, int> res;
+	while (position.lock() != html)
+	{
+		res.insert(pair<string, int>(position.lock()->name(), position.lock()->get_this_index()));
+		position = position.lock()->father();
+	}
+	return res;
+}
+
+string script_interpretor::print_current_position(std::weak_ptr<html_element> position)
+{
+	ostringstream oss;
+	auto cur_vec = current(position);
+	for (auto& x : cur_vec)
+	{
+		oss << x.first;
+		if (x.second == 0)
+		{
+			oss << ".";
+			continue;
+		}
+		else
+		{
+			oss << "[" << x.second << "]";
+			oss << ".";
+		}
+		
+	}
+	return oss.str();
+}
+
 void script_interpretor::run_script(vs_auto_iterator iter, std::weak_ptr<html_element> position)
 {
+	//cout << print_current_position(position) << endl;;
 	if (iter.reaches_end)
 	{
 		current_pos = position;
 		return;
 	}
+	
 
 	if (is_special_word(iter.str(),position))
 	{
