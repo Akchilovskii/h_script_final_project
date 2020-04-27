@@ -3,10 +3,10 @@
 #include<string>
 #include<fstream>
 #include"asio_tcp_server.h"
+#include"string_processor.h"
 
 
 using namespace std;
-
 
 
 
@@ -96,7 +96,7 @@ public:
 			if (post_context_vec.size() < 2)
 			{
 				cout<< "warning! server processing: didn't read user name or code"<< endl;
-				username = "defaule new user";
+				username = "code";
 				code = "html.body";
 			}
 			else
@@ -141,12 +141,16 @@ public:
 
 int main()
 {
-	/*server_processing sp(9190);
+
+	/*
+	server_processing sp(9190);
 	for (int i = 0; i < 10; i++)
 	{
 		sp.run();
 	}
-	return 1;
+	*/
+	//return 1;
+	/*
 	string protocal = "HTTP 1.1 200 OK\r\n";
 	string c_type = "Content-type:text/html\r\n";
 	string c_length = "2048\r\n";
@@ -183,7 +187,7 @@ int main()
 	server.send_by_server(sii.show_html_code());
 
 	//cout << str;
-	//return 1;*/
+	return 1;*/
 	
 	//脚本解释器
 	script_interpretor si;
@@ -202,7 +206,7 @@ int main()
 			“>>”符号滚动至同目录下，下一个同名标签
 			“<”符号返回上一级目录
 		*/
-		ifstream inf("code.hScript");
+		ifstream inf("main.hScript");
 		si.debug(false);
 		if (!inf)
 		{

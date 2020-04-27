@@ -1,0 +1,26 @@
+html.body
+style.*.css.margin=0
+func.println.str="mystr"
+{
+	html.body.div.+p.text=#str
+}
+
+func.get-input.placeholder="ph".button_value="btn"
+{
+	html.body.div.form.input[0,1].single.<
+	.input[0].type=text
+	.placeholder=#placeholder
+	.>>.type=submit
+	.value=#button_value
+}
+
+func.creatediv.width="w".height="h".color="c".name="n"
+{
+	html.body.style."."+#name.css.
+	width=#width.
+	height=#height.
+	float=left.
+	background-color=#color.
+	html.body.+div.class=#name
+}
+

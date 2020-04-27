@@ -78,6 +78,40 @@ inline string string_processor::cuttor(string_ref& str, int pos, int cut_len)
 	return res;
 }
 
+string string_processor::ignore_front(string_ref original_str_ref,char ignore, bool ignore_all)
+{
+	if (original_str_ref.front()!=ignore)
+	{
+		return original_str_ref.to_string();
+	}
+	if (ignore_all)
+	{
+		return ignore_front(original_str_ref.substr(sizeof(ignore)), ignore, true);
+	}
+	else
+	{
+		return original_str_ref.substr(sizeof(ignore)).to_string();
+	}
+}
+
+string string_processor::ignore_back(string_ref original_str_ref, char ignore, bool ignore_all)
+{
+	if (original_str_ref.back() != ignore)
+	{
+		return original_str_ref.to_string();
+	}
+	if (ignore_all)
+	{
+		original_str_ref.remove_suffix(sizeof(ignore));
+		return ignore_back(original_str_ref, ignore, true);
+	}
+	else
+	{
+		original_str_ref.remove_suffix(sizeof(ignore));
+		return original_str_ref.to_string();
+	}
+}
+
 vector<string> string_processor::split(string str, string_protector& s_pro, symbol_locator& s_dev)
 {
 	vector<int> split_pos;

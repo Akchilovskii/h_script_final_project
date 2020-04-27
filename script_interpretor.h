@@ -18,7 +18,7 @@
 #include<boost/tokenizer.hpp>
 #include<boost/algorithm/string.hpp>
 #include<boost/lexical_cast.hpp>
-
+#include"my_script_macro_.h"
 #include"html_doc.h"
 #include<fstream>
 #include"my_utilities.hpp"
@@ -35,9 +35,23 @@ public:
 	script_interpretor();
 
 	string show_html_code();
-	void script(string cmd);
+	class statement_register
+	{
+	public:
+		//但是我又觉得用字符串太耗性能了
+		//但是我英文又不好。。。
+		void register_state(int, bool value);
+		void pop_state(int state_name);
+		bool get_state(int state_name);
+		bool has_state(int state_name);
+	private:
+		map<int, bool> states;
+	};
 
+	void script(string cmd);
 	
+	void header_file_reader(string filepath);
+
 	
 	template<typename arg_type>
 	struct operation
@@ -59,12 +73,13 @@ public:
 	bool is_special_symbol(string key_symbol, std::weak_ptr<html_element>& position);
 	bool basic_parentheses_handler(string command, std::weak_ptr<html_element>& position);
 	bool square_bracket_handler(vs_auto_iterator iter, std::weak_ptr<html_element>& position);
-
+	bool contains_operator(string& command, std::weak_ptr<html_element>& position);
 	////opration function
 	
 	std::weak_ptr<html_element> next(std::weak_ptr<html_element> position, string element_name, std::weak_ptr<html_element> this_addr);
 	void track_pos(std::weak_ptr<html_element>& cur_pos, string command);
 	void increase_element(unsigned int num, string element_name, std::weak_ptr<html_element>& position);
+	string html_plus(string operand1, string operand2, std::weak_ptr<html_element>& position);
 
 	enum r_or_l
 	{
@@ -101,6 +116,7 @@ private:
 
 	std::weak_ptr<html_element> current_pos;
 	vector<string> cmds_list;
+	statement_register states;
 };
 
 template<typename arg_type>

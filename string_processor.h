@@ -23,6 +23,8 @@ public:
 	static inline int locator(string_ref str, int n_th, string_ref strf);
 	static inline string extractor(string_ref str, int pos_one, int pos_two);
 	static inline string cuttor(string_ref& str, int length, int cut_len = 0);
+	
+	
 	class string_protector
 	{
 	public:
@@ -99,7 +101,8 @@ public:
 		bool token_end = false;
 		pair<string, string> non_concerned;
 	};
-
+	static string ignore_front(string_ref original_str_ref, char ignore, bool ignore_all = false);
+	static string ignore_back(string_ref original_str_ref, char ignore, bool ignore_all = false);
 	static vector<string> split(string str, string_protector& s_pro, symbol_locator& s_dev);
 };
 

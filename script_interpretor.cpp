@@ -16,6 +16,7 @@ script_interpretor::script_interpretor()
 	current_pos = html;
 }
 
+
 string script_interpretor::show_html_code()
 {
 	return html->list_all_element(html);
@@ -23,14 +24,47 @@ string script_interpretor::show_html_code()
 
 void script_interpretor::script(string cmd)
 {
+	//所以现在要写一种机制，不使用source 关键字，将函数源码直接读入标签体内
+	//好吧花括号果然香
+	//要写一个状态机，标志或括号的起始和结束
+	cmd = string_processor::ignore_front(cmd, '\t', true);
 	protector s_pro("\"");
 	devider s_dev(".", cmd);
+	if (contains(cmd, "{"))
+	{
+		states.register_state(BRACKET_NOT_FINISHED, true);
+		return;
+	}
+	if (contains(cmd, "}") && states.get_state(BRACKET_NOT_FINISHED))
+	{
+		states.pop_state(BRACKET_NOT_FINISHED);
+		return;
+	}
+	if (states.get_state(BRACKET_NOT_FINISHED))
+	{
+		current_pos.lock()->text(cmd);
+		return;
+	}
 	cmds_list = string_processor::split(cmd, s_pro, s_dev);
 	if (cmds_list.size() == 0)
 		return;
 
 	vs_auto_iterator iter(cmds_list);
 	run_script(iter, current_pos);
+}
+
+void script_interpretor::header_file_reader(string filepath)
+{
+	ifstream inf(filepath);
+	if (!inf.good())
+	{
+		throw "header_file_reader error: file fail";
+	}
+	string str;
+	while (inf >> str)
+	{
+		script(str);
+	}
 }
 
 
@@ -135,6 +169,11 @@ bool script_interpretor::is_special_word(string key_word, std::weak_ptr<html_ele
 		position.lock()->set_to_css();
 		return true;
 	}
+	if (key_word == "read")
+	{
+		states.register_state(FILE_OPERATION_READ, true);
+		return true;
+	}
 	return false;
 }
 
@@ -209,7 +248,7 @@ bool script_interpretor::basic_parentheses_handler(string command, std::weak_ptr
 			x.replace(x.find('#'), ori_len, attr_name);
 		}
 	}
-	vs_auto_iterator func_iter(func_cmds_list);
+	//vs_auto_iterator func_iter(func_cmds_list);
 	for (auto& x : func_cmds_list)
 	{
 		script(x);
@@ -240,6 +279,30 @@ bool script_interpretor::square_bracket_handler(vs_auto_iterator iter, std::weak
 		run_script(iter, selector[x]);
 	}
 	return true;
+}
+
+bool script_interpretor::contains_operator(string& command, std::weak_ptr<html_element>& position)
+{
+	protector s_pro("\"");
+	s_pro.feed(command);
+	if (contains(command,"+"))//神奇的事情发生了。。。我也不知知道那里改了原始字符串。。。
+								//好吧现在知道了。。。
+								//  字符分割器，参数反了。。。    
+	{
+		devider s_dev("+",command);
+		auto operands = string_processor::split(command, s_pro, s_dev);
+		if (operands.size() > 2)
+			throw "html_plus error: multiple operands(>=2) have not been supported yet";
+		if (operands.at(0) == "")
+		{
+			position = position.lock()->add_element(operands.at(1));
+			states.register_state(SKIP_THIS, true);
+			return true;
+		}
+		command = html_plus(operands.at(0), operands.at(1), position);
+		return true;
+	}
+	return false;
 }
 
 std::weak_ptr<html_element> script_interpretor::next(std::weak_ptr<html_element> position, string element_name, std::weak_ptr<html_element> this_addr)
@@ -275,6 +338,17 @@ void script_interpretor::increase_element(unsigned int num, string element_name,
 	}
 }
 
+string script_interpretor::html_plus(string operand1, string operand2, std::weak_ptr<html_element>& position)
+{
+	operand1 = string_processor::ignore_front(operand1, '"');
+	operand1 = string_processor::ignore_back(operand1, '"');
+	operand2 = string_processor::ignore_front(operand2, '"');
+	operand2 = string_processor::ignore_back(operand2, '"');
+	replacable_interpretor(operand1, position, r_value);
+	replacable_interpretor(operand2, position, r_value);
+	return operand1 + operand2;
+}
+
 bool script_interpretor::attr_fetcher(string& fetching_attr, std::weak_ptr<html_element>& position, r_or_l rl)
 {
 	int num = 0;
@@ -302,6 +376,10 @@ bool script_interpretor::attr_fetcher(string& fetching_attr, std::weak_ptr<html_
 
 string script_interpretor::replacable_interpretor(string& original_str, std::weak_ptr<html_element>& position, r_or_l rl)
 {
+	if (original_str.length() < 2)
+	{
+		return original_str;
+	}
 	char prefix_operator = original_str[0];
 	string target_str = original_str.substr(1);
 	switch (prefix_operator)
@@ -365,7 +443,25 @@ void script_interpretor::run_script(vs_auto_iterator iter, std::weak_ptr<html_el
 		current_pos = position;
 		return;
 	}
-	
+	cout << iter.str() << endl;
+	if (contains_operator(*(iter.cur_iter), position))
+	{
+		;
+	}
+	if (states.get_state(SKIP_THIS))
+	{
+		states.pop_state(SKIP_THIS);
+		return run_script(++iter, position);
+	}
+	if (states.get_state(FILE_OPERATION_READ))
+	{
+		states.pop_state(FILE_OPERATION_READ);
+		string filepath = iter.str();
+		filepath = string_processor::ignore_front(filepath, '"');
+		filepath = string_processor::ignore_back(filepath, '"');
+		header_file_reader(filepath);
+		return;
+	}
 
 	if (is_special_word(iter.str(),position))
 	{
@@ -403,7 +499,33 @@ void script_interpretor::debug(bool _debug_on)
 		(*code)["invisible"] = "true";
 }
 
+void script_interpretor::statement_register::register_state(int state, bool value)
+{
+	states[state] = value;
+}
 
+void script_interpretor::statement_register::pop_state(int state_name)
+{
+	states.erase(state_name);
+}
 
+bool script_interpretor::statement_register::get_state(int state_name)
+{
+	if (!this->has_state(state_name))
+		return false;
+	else
+		return states[state_name];
+}
 
-
+bool script_interpretor::statement_register::has_state(int state_name)
+{
+	auto state_iter = states.find(state_name);
+	if (state_iter == states.end())
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}

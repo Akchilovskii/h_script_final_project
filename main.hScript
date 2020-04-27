@@ -1,0 +1,13 @@
+read."code.hScript"
+
+
+creatediv(100%,20%,green,new-G)
+creatediv(100%,20%,lightblue,new-LB)
+creatediv(100%,20%,yellow,new-Y)
+creatediv(100%,20%,orange,new-O)
+creatediv(100%,20%,silver,new-S)
+
+println("hello world")
+println("if you are not happy, smile")
+println("there are indeed sorrow days before those happy")
+get-input("are you happy", yes)
