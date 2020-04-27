@@ -96,7 +96,7 @@ public:
 			if (post_context_vec.size() < 2)
 			{
 				cout<< "warning! server processing: didn't read user name or code"<< endl;
-				username = "code";
+				username = "main";
 				code = "html.body";
 			}
 			else
@@ -142,14 +142,14 @@ public:
 int main()
 {
 
-	/*
+	
 	server_processing sp(9190);
 	for (int i = 0; i < 10; i++)
 	{
 		sp.run();
 	}
-	*/
-	//return 1;
+	
+	return 1;
 	/*
 	string protocal = "HTTP 1.1 200 OK\r\n";
 	string c_type = "Content-type:text/html\r\n";
