@@ -13,8 +13,3 @@ println("there are indeed sorrow days before those happy")
 get-input("are you happy", yes)
 system-panel(visitor)
 html.body
-html.body
-html.body
-html.body
-html.body
-html.body

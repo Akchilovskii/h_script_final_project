@@ -438,12 +438,11 @@ string script_interpretor::print_current_position(std::weak_ptr<html_element> po
 void script_interpretor::run_script(vs_auto_iterator iter, std::weak_ptr<html_element> position)
 {
 	//cout << print_current_position(position) << endl;;
+	current_pos = position;
 	if (iter.reaches_end)
 	{
-		current_pos = position;
 		return;
 	}
-	cout << iter.str() << endl;
 	if (contains_operator(*(iter.cur_iter), position))
 	{
 		;

@@ -38,10 +38,18 @@ class my_asio_server
 public:
 	my_asio_server(short port)
 		:
-		m_sock(m_io)
+		m_sock(m_io),
+		port(port)
+	{}
+	void accept_new_sock()
 	{
 		acceptor_type acceptor(m_io, endpoint_type(asio::ip::tcp::v4(), port));
 		acceptor.accept(m_sock);
+		
+	}
+	void close_sock()
+	{
+		m_sock.close();
 	}
 	string server_receive()
 	{
@@ -57,6 +65,7 @@ public:
 		return m_sock.send(asio::buffer(str));
 	}
 private:
+	unsigned short port;
 	boost::asio::io_service m_io;
 	socket_type m_sock;
 };
@@ -84,6 +93,15 @@ string post_request_context_reader(string post_req_line)
 void html_doc_processor(string& html_str)
 {
 	string_replacer(html_str, "%3D", "=");
+	string_replacer(html_str, "+", " ");
+	string_replacer(html_str, "%28", "(");
+	string_replacer(html_str, "%29", ")");
+	string_replacer(html_str, "%2C", ",");
+	string_replacer(html_str, "%22", "\"");
+	string_replacer(html_str, "%5B", "[");
+	string_replacer(html_str, "%5D", "]");
+	string_replacer(html_str, "%2B", "+");
+	string_replacer(html_str, "%3C", "<");
 }
 
 vector<string> post_request_devider(string req_context)

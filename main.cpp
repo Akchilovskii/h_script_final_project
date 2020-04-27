@@ -49,7 +49,9 @@ public:
 		ifstream inf(file_name);
 		if (!inf)
 		{
-			throw "file not exist error";
+			ofstream outf(file_name);
+			outf.close();
+			inf.open("main.hScript");
 		}
 		string str;
 		while (getline(inf, str))
@@ -81,13 +83,15 @@ public:
 
 		try
 		{
+			m_asio_serv.accept_new_sock();
+			std::system("cls");
 			string http_message;
 			while (http_message.length() < 300)
 			{
 				http_message = m_asio_serv.server_receive();
 			}
 			auto post_req_line = post_request_context_reader(http_message);
-
+			cout << "post line:" << post_req_line << endl;
 			auto post_context_vec = post_request_devider(post_req_line);
 
 			string username;
@@ -105,7 +109,11 @@ public:
 				username = post_context_vec.at(1);
 				html_doc_processor(username);
 				html_doc_processor(code);
+				username = username.substr(sizeof("username=")-1);
+				code = code.substr(sizeof("code=")-1);
 			}
+			cout << "user: " << username << " ";
+			cout << "usercode:" << code << endl;
 			string file_name = username + ".hScript";
 
 			auto cmds_list = read_file(file_name);
@@ -114,9 +122,9 @@ public:
 			script_interpretor si;
 			for (auto& i : cmds_list)
 			{
-				cout << i << endl;
+				//cout << i << endl;
 				si.script(i);
-				cout << si.show_html_code() << endl;
+				//cout << si.show_html_code() << endl;
 			}
 			
 			write_file(file_name, cmds_list);
@@ -127,12 +135,18 @@ public:
 			m_asio_serv.send_by_server(c_length);
 			m_asio_serv.send_by_server(delim);
 			m_asio_serv.send_by_server(html_source);
+			m_asio_serv.close_sock();
 		}
 		catch (const char* e)
 		{
 			cout << e << endl;
+			m_asio_serv.close_sock();
 		}
-
+		catch (std::exception & e)
+		{
+			cout << e.what();
+			m_asio_serv.close_sock();
+		}
 	
 	}
 };

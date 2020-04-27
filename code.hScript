@@ -26,17 +26,20 @@ func.creatediv.width="w".height="h".color="c".name="n"
 
 func.system-panel.username="visitor"
 {
+	style."."+panel-input.css.
+	width=25%.height=50%.
 	html.body.div[4].+div.class=system-panel.
 	form.action="http://127.0.0.1:9190/".
-	
-	+input.single.name=code.type=text.placeholder=在这里输入代码 .<.
-	+input.single.name=username.type=text.value=#username.<.
-	+input.single.type=submit.value="execute".<.
-	body.style.".system-panel".css.<.
+	method=post.
+	+input.single.class=panel-input.name=code.type=text.placeholder=在这里输入代码 .<.
+	+input.single.class=panel-input.name=username.type=text.value=#username.<.
+	+input.single.name=confirm.type=submit.value="execute".<.
+	body.style."."+system-panel.css.
 	position=fixed.
 	width=100%.height=5%.
 	float=right.
 	top=95%.
 	left=0%.
 }
+
 html.body
