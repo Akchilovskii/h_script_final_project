@@ -7,9 +7,25 @@ creatediv(100%,20%,yellow,new-Y)
 creatediv(100%,20%,orange,new-O)
 creatediv(100%,20%,silver,new-S)
 
-println("hello world")
-println("if you are not happy, smile")
-println("there are indeed sorrow days before those happy")
+
+println(0,"if you are not happy, smile")
+println(0,"there are indeed sorrow days before those happy")
+println(0,"happyniess")
 get-input("are you happy", yes)
 system-panel(visitor)
+
+
+
+html.body
+html.body
+html.body
+html.body
+html.body
+println(1,this is the second line)  
+html.body
+html.body
+html.body
+html.body
+println(2,this is the third line)  
+println(3,this is the fourth line)  
 html.body

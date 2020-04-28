@@ -83,6 +83,7 @@ public:
 
 		try
 		{
+			cout << "output stream ok?" << endl;
 			m_asio_serv.accept_new_sock();
 			std::system("cls");
 			string http_message;
@@ -129,6 +130,7 @@ public:
 			
 			write_file(file_name, cmds_list);
 			auto html_source = si.show_html_code();
+			cout << html_source << endl;
 
 			m_asio_serv.send_by_server(protocal);
 			m_asio_serv.send_by_server(c_type);

@@ -153,7 +153,15 @@ inline script_interpretor::operation<arg_type>& script_interpretor::parentheses<
 	vector<arg_type> args_value;
 	for (auto& i : str_vec)
 	{
-		args_value.push_back(lexical_cast<arg_type>(i));
+		try 
+		{
+			args_value.push_back(lexical_cast<arg_type>(i));
+		}
+		catch (std::exception & e)
+		{
+			cout << i << " can not be converse to desired type" << endl;
+		}
+		
 	}
 	values.value = args_value;
 	values.start_pos = values.s_pro.pro_one();

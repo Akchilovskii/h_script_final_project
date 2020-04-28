@@ -217,14 +217,21 @@ bool script_interpretor::basic_parentheses_handler(string command, std::weak_ptr
 	auto m_argv = _parentheses(command);
 	if(!m_argv)
 		return false;
+
+
 	auto func_name = command.substr(0, m_argv.start_pos);
 	html_selector selector(func_name, func);
+
+
 	if (selector.size() == 0)
 	{
 		throw "function calling error : undefined function";
 	}
+
+
 	auto html_func_invoke = [=](vector<string>& cmds_list, std::weak_ptr<html_element> func)
 	{
+
 		auto attr_iter = func.lock()->get_attribs_iter();
 		auto attr_end_iter = func.lock()->get_attribs_end_iter();
 
@@ -238,14 +245,17 @@ bool script_interpretor::basic_parentheses_handler(string command, std::weak_ptr
 
 	};
 	auto command_line = selector[0]->get_inner_text();
-	//m_argv.value.push_back(print_current_position(position));
+	
 	html_func_invoke(m_argv.value, selector[0]);
 	std::weak_ptr<html_element> selected_ele = selector[0];
 	protector s_pro("\"");
 	devider s_dev(".", command_line);
+
+
 	auto func_cmds_list = string_processor::split(command_line, s_pro, s_dev);
 	for (auto& x : func_cmds_list)
 	{
+		
 		if (x.length() >= 2 && x.front() == '"' && x.back() == '"')
 		{
 			x = x.substr(1);
@@ -254,12 +264,15 @@ bool script_interpretor::basic_parentheses_handler(string command, std::weak_ptr
 		if (contains(x, "#"))
 		{
 			auto attr_name = x.substr(x.find('#'));
+			
+			while (!all(attr_name.substr(1), is_alnum()) & !contains(attr_name, "-") & !contains(attr_name, "_"))
+				attr_name.pop_back();
 			int ori_len = attr_name.length();
 			attr_name = replacable_interpretor(attr_name, selected_ele, r_value);
 			x.replace(x.find('#'), ori_len, attr_name);
 		}
 	}
-	//vs_auto_iterator func_iter(func_cmds_list);
+	
 	for (auto& x : func_cmds_list)
 	{
 		script(x);
