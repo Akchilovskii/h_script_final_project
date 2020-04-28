@@ -17,6 +17,17 @@ script_interpretor::script_interpretor()
 }
 
 
+
+
+std::weak_ptr<html_element> script_interpretor::query_element(string command)
+{
+	auto current_pos_stored = current_pos;
+	script(command);
+	auto returned_pos = current_pos;
+	current_pos = current_pos_stored;
+	return returned_pos;
+}
+
 string script_interpretor::show_html_code()
 {
 	return html->list_all_element(html);
@@ -45,7 +56,7 @@ void script_interpretor::script(string cmd)
 		current_pos.lock()->text(cmd);
 		return;
 	}
-	cmds_list = string_processor::split(cmd, s_pro, s_dev);
+	auto cmds_list = string_processor::split(cmd, s_pro, s_dev);
 	if (cmds_list.size() == 0)
 		return;
 

@@ -102,6 +102,7 @@ void html_doc_processor(string& html_str)
 	string_replacer(html_str, "%5D", "]");
 	string_replacer(html_str, "%2B", "+");
 	string_replacer(html_str, "%3C", "<");
+	string_replacer(html_str, "%25", "%");
 }
 
 vector<string> post_request_devider(string req_context)

@@ -34,6 +34,8 @@ class script_interpretor
 public:
 	script_interpretor();
 
+
+	std::weak_ptr<html_element> query_element(string command);
 	string show_html_code();
 	class statement_register
 	{
@@ -49,6 +51,7 @@ public:
 	};
 
 	void script(string cmd);
+
 	
 	void header_file_reader(string filepath);
 
@@ -115,7 +118,7 @@ private:
 	std::shared_ptr<html_element> html,head,body,style,code,ele,func;
 
 	std::weak_ptr<html_element> current_pos;
-	vector<string> cmds_list;
+	
 	statement_register states;
 };
 
